@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --color-primary: #0B3D4C;
@@ -667,17 +668,26 @@
     <script>
         /* ----------  CONFIG / DATOS INICIALES  ---------- */
         let catalogo = [];
-        const API_BASE = window.location.origin;
+        
+        // Inicializar Supabase
+        const SUPABASE_URL = 'https://nhkpctbmyhjqsfozxdmb.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oa3BjdGJteWhqcXNmb3p4ZG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDAzMzcsImV4cCI6MjA5NDYxNjMzN30.DzV-NsqO-KpqxdUldgj8OX-NPYWnHthPQ4bGi1ghGco';
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         async function loadCatalogFromServer() {
             try {
-                console.log('[CLIENT] Cargando productos desde:', API_BASE + '/api/products');
-                const res = await fetch(API_BASE + '/api/products');
-                if (!res.ok) throw new Error('No se pudo cargar el catálogo');
-                catalogo = await res.json();
+                console.log('[CLIENT] Cargando productos desde Supabase...');
+                const { data, error } = await _supabase
+                    .from('productos')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                catalogo = data;
                 console.log('[CLIENT] Catálogo cargado:', catalogo.length, 'productos');
             } catch (e) {
-                console.error('[CLIENT] Error cargando catálogo:', e);
+                console.error('[CLIENT] Error cargando catálogo de Supabase:', e);
                 // Fallback a datos de ejemplo cuando no hay servidor
                 catalogo = [
                     {
@@ -1048,7 +1058,7 @@
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta';
 
-                    const imgSrc = p.img ? p.img : 'https://via.placeholder.com/400x300?text=Sin+Imagen';
+                    const imgSrc = p.img ? p.img : `https://via.placeholder.com/400x300?text=${encodeURIComponent(p.nombre)}`;
 
                     tarjeta.innerHTML = `
                 <img src="${imgSrc}" alt="${p.nombre}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Imagen+No+Disponible';">
