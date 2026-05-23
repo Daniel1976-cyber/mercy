@@ -1,6 +1,10 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,8 +38,10 @@ function fetchProductsFromSupabase() {
         } else {
           reject(new Error(`Status: ${res.statusCode}, Body: ${data}`));
         }
-      });
-    });
+  });
+});
+
+
 
     req.on('error', (e) => { reject(e); });
     req.end();
@@ -58,7 +64,6 @@ fetchProductsFromSupabase().then(data => {
   // Fallback a mercy.json
   try {
     const fs = require('fs');
-    const path = require('path');
     const fileData = fs.readFileSync(path.join(__dirname, 'mercy.json'), 'utf8');
     const rawProducts = JSON.parse(fileData);
     productos = rawProducts.map((p, index) => ({
@@ -89,13 +94,13 @@ app.get('/api/products/:id', (req, res) => {
   res.json(producto);
 });
 
-// Ruta para obtener categorías únicas
+// Ruta para obtener categorias unicas
 app.get('/api/categories', (req, res) => {
   const categories = [...new Set(productos.map(p => p.categoria))];
   res.json(categories);
 });
 
-// Ruta para obtener subcategorías por categoría
+// Ruta para obtener subcategorias por categoria
 app.get('/api/subcategories/:category', (req, res) => {
   const subcategories = [...new Set(
     productos
@@ -105,13 +110,15 @@ app.get('/api/subcategories/:category', (req, res) => {
   res.json(subcategories);
 });
 
-// Servir archivos estáticos desde el directorio raíz (para romero.html)
+// Servir archivos estaticos desde el directorio raiz
 app.use(express.static(__dirname));
 
 // Ruta principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+const app = express();           // <-- repetido eliminado
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
