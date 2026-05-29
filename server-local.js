@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import https from 'https';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,7 +16,6 @@ app.use(cors());
 app.use(express.json());
 
 // Cargar productos desde Supabase
-const https = require('https');
 let productos = [];
 
 function fetchProductsFromSupabase() {
@@ -63,7 +64,6 @@ fetchProductsFromSupabase().then(data => {
   console.error("Error al cargar productos desde Supabase:", e);
   // Fallback a mercy.json
   try {
-    const fs = require('fs');
     const fileData = fs.readFileSync(path.join(__dirname, 'mercy.json'), 'utf8');
     const rawProducts = JSON.parse(fileData);
     productos = rawProducts.map((p, index) => ({
@@ -118,7 +118,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-const app = express();           // <-- repetido eliminado
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
