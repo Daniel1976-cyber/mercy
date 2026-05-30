@@ -649,17 +649,22 @@
                 renderizarProductos();
             } catch (err) {
                 console.error('[ADMIN] Error loading products from Supabase:', err);
-                // Fallback to local server API (served on same origin)
-                try {
-                    const response = await fetch('/api/products');
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
-                    productos = data;
-                    actualizarDashboard();
-                    renderizarProductos();
-                    mostrarAlerta('Cargados productos desde fallback local', 'info');
-                } catch (fallbackErr) {
-                    console.error('[ADMIN] Fallback error loading products:', fallbackErr);
+                // Use fallback only when running on localhost (development)
+                const isLocal = window.location.hostname === 'localhost' || window.location.port === '3000';
+                if (isLocal) {
+                    try {
+                        const response = await fetch('/api/products');
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        productos = data;
+                        actualizarDashboard();
+                        renderizarProductos();
+                        mostrarAlerta('Cargados productos desde fallback local', 'info');
+                    } catch (fallbackErr) {
+                        console.error('[ADMIN] Fallback error loading products:', fallbackErr);
+                        mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
+                    }
+                } else {
                     mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
                 }
             }
