@@ -649,6 +649,7 @@
                 actualizarDashboard();
                 renderizarProductos();
             } catch (err) {
+                console.error('[ADMIN] Error loading products:', err);
                 mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
             }
         }
