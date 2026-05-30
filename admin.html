@@ -649,22 +649,23 @@
                 renderizarProductos();
             } catch (err) {
                 console.error('[ADMIN] Error loading products from Supabase:', err);
-                // Use fallback only when running on localhost (development)
-                const isLocal = window.location.hostname === 'localhost' || window.location.port === '3000';
-                if (isLocal) {
-                    try {
-                        const response = await fetch('/api/products');
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const data = await response.json();
-                        productos = data;
-                        actualizarDashboard();
-                        renderizarProductos();
-                        mostrarAlerta('Cargados productos desde fallback local', 'info');
-                    } catch (fallbackErr) {
-                        console.error('[ADMIN] Fallback error loading products:', fallbackErr);
-                        mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
-                    }
-                } else {
+                // Attempt direct Supabase REST API as fallback
+                try {
+                    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*`, {
+                        headers: {
+                            apikey: SUPABASE_KEY,
+                            Authorization: `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (!supabaseResponse.ok) throw new Error(`HTTP ${supabaseResponse.status}`);
+                    const data = await supabaseResponse.json();
+                    productos = data;
+                    actualizarDashboard();
+                    renderizarProductos();
+                    mostrarAlerta('Cargados productos desde Supabase REST fallback', 'info');
+                } catch (fallbackErr) {
+                    console.error('[ADMIN] Fallback error loading products:', fallbackErr);
                     mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
                 }
             }
