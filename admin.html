@@ -642,22 +642,27 @@
         // Cargar productos
         async function cargarProductos() {
             try {
-                } catch (err) {
-                    console.error('[ADMIN] Error loading products from Supabase:', err);
-                    // Fallback to local server API (served on same origin)
-                    try {
-                        const response = await fetch('/api/products');
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const data = await response.json();
-                        productos = data;
-                        actualizarDashboard();
-                        renderizarProductos();
-                        mostrarAlerta('Cargados productos desde fallback local', 'info');
-                    } catch (fallbackErr) {
-                        console.error('[ADMIN] Fallback error loading products:', fallbackErr);
-                        mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
-                    }
+                const { data, error } = await _supabase.from('productos').select('*');
+                if (error) throw error;
+                productos = data || [];
+                actualizarDashboard();
+                renderizarProductos();
+            } catch (err) {
+                console.error('[ADMIN] Error loading products from Supabase:', err);
+                // Fallback to local server API (served on same origin)
+                try {
+                    const response = await fetch('/api/products');
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    productos = data;
+                    actualizarDashboard();
+                    renderizarProductos();
+                    mostrarAlerta('Cargados productos desde fallback local', 'info');
+                } catch (fallbackErr) {
+                    console.error('[ADMIN] Fallback error loading products:', fallbackErr);
+                    mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
                 }
+            }
         }
 
         function actualizarDashboard() {
