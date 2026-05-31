@@ -396,12 +396,24 @@
             box-shadow: 0 6px 12px rgba(11, 61, 76, 0.3);
         }
 
-        .img-preview {
-            max-width: 100px;
-            max-height: 100px;
-            margin-top: 0.5rem;
-            border-radius: 4px;
-        }
+    .drop-area {
+        border: 2px dashed rgba(0,0,0,0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.3s, border-color 0.3s;
+    }
+    .drop-area:hover {
+        background: rgba(0,0,0,0.05);
+        border-color: #0B3D4C;
+    }
+    .drop-area i {
+        color: #0B3D4C;
+        margin-bottom: 0.5rem;
+    }
+    .img-preview.hidden { display: none; }
+    .img-preview { max-width: 150px; margin-top: 0.5rem; border-radius: 4px; }
 
         .acciones {
             display: flex;
@@ -555,9 +567,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="imagen">URL de Imagen</label>
-                        <input type="text" id="imagen" placeholder="https://ejemplo.com/imagen.jpg" />
-                        <img id="imagenPreview" class="img-preview" style="display: none;" />
+                        <label>Imagen del Producto (arrastrar o click)</label>
+                        <div id="dropArea" class="drop-area">
+                            <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                            <p>Arrastra la imagen aquí o haz clic para seleccionar</p>
+                            <img id="imagePreview" class="img-preview hidden" alt="Vista previa" />
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" style="display:none;" />
                     </div>
 
                     <div class="form-group">
@@ -657,36 +673,122 @@
             event.target.classList.add('active');
         }
 
-        // Cargar productos
-        async function cargarProductos() {
-            try {
-                const { data, error } = await _supabase.from('productos').select('*');
-                if (error) throw error;
-                productos = data || [];
-                actualizarDashboard();
-                renderizarProductos();
-            } catch (err) {
-                console.error('[ADMIN] Error loading products from Supabase:', err);
-                // Attempt direct Supabase REST API as fallback
-                try {
-                    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*`, {
-                        headers: {
-                            apikey: SUPABASE_KEY,
-                            Authorization: `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (!supabaseResponse.ok) throw new Error(`HTTP ${supabaseResponse.status}`);
-                    const data = await supabaseResponse.json();
-                    productos = data;
-                    actualizarDashboard();
-                    renderizarProductos();
-                    mostrarAlerta('Cargados productos desde Supabase REST fallback', 'info');
-                } catch (fallbackErr) {
-                    console.error('[ADMIN] Fallback error loading products:', fallbackErr);
-                    mostrarAlerta('Error al cargar productos: ' + err.message, 'error');
-                }
+        // Variable to hold the uploaded image URL
+        let uploadedImageUrl = '';
+
+        // Drag-and-drop and click handling for image upload
+        const dropArea = document.getElementById('dropArea');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+
+        dropArea.addEventListener('click', () => imageInput.click());
+        dropArea.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropArea.classList.add('hover');
+        });
+        dropArea.addEventListener('dragleave', () => dropArea.classList.remove('hover'));
+        dropArea.addEventListener('drop', e => {
+            e.preventDefault();
+            dropArea.classList.remove('hover');
+            const files = e.dataTransfer.files;
+            if (files && files[0]) handleFileUpload(files[0]);
+        });
+        imageInput.addEventListener('change', e => {
+            if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0]);
+        });
+
+        async function handleFileUpload(file) {
+            // Basic validation
+            if (!file.type.startsWith('image/')) {
+                mostrarAlerta('Solo se permiten archivos de imagen', 'error');
+                return;
             }
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                mostrarAlerta('La imagen no debe superar los 5 MB', 'error');
+                return;
+            }
+            // Show a temporary preview
+            const reader = new FileReader();
+            reader.onload = e => {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+
+            // Upload to Supabase Storage
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = fileName; // root of bucket
+            try {
+                const { data, error } = await _supabase.storage
+                    .from('producto-imagenes')
+                    .upload(filePath, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                    });
+                if (error) throw error;
+                const { publicURL, error: urlErr } = _supabase.storage
+                    .from('producto-imagenes')
+                    .getPublicUrl(filePath);
+                if (urlErr) throw urlErr;
+                uploadedImageUrl = publicURL;
+                mostrarAlerta('Imagen subida correctamente', 'success');
+            } catch (err) {
+                console.error('Upload error:', err);
+                mostrarAlerta('Error al subir la imagen: ' + err.message, 'error');
+                uploadedImageUrl = '';
+                imagePreview.classList.add('hidden');
+            }
+        }
+
+        // Updated guardarProducto to use uploadedImageUrl
+        async function guardarProducto() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const categoria = document.getElementById('categoria').value;
+            const subcategoria = document.getElementById('subcategoria').value;
+            const precio = parseFloat(document.getElementById('precio').value);
+            const disponible = document.getElementById('disponible').checked;
+            const img = uploadedImageUrl || 'https://via.placeholder.com/400x300?text=' + encodeURIComponent(nombre);
+            const descripcion = document.getElementById('descripcion').value;
+
+            if (!nombre || !categoria || !precio) {
+                mostrarAlerta('Por favor completa los campos obligatorios', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await _supabase
+                    .from('productos')
+                    .insert([{
+                        nombre,
+                        categoria,
+                        subcategoria: subcategoria || 'General',
+                        precio,
+                        disponible,
+                        img,
+                        descripcion
+                    }]);
+                if (error) throw error;
+                mostrarAlerta('Producto agregado correctamente', 'success');
+                limpiarFormulario();
+                cargarProductos();
+                cambiarTab('productos');
+            } catch (err) {
+                mostrarAlerta('Error: ' + err.message, 'error');
+            }
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('nombre').value = '';
+            document.getElementById('categoria').value = '';
+            document.getElementById('subcategoria').value = '';
+            document.getElementById('precio').value = '';
+            document.getElementById('disponible').checked = true;
+            // Reset image variables and preview
+            uploadedImageUrl = '';
+            imagePreview.src = '';
+            imagePreview.classList.add('hidden');
+            document.getElementById('formTitle').textContent = 'Agregar Nuevo Producto';
         }
 
         function actualizarDashboard() {
@@ -720,46 +822,8 @@
                         </div>
                     </td>
                 `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Guardar producto
-        async function guardarProducto() {
-            const nombre = document.getElementById('nombre').value.trim();
-            const categoria = document.getElementById('categoria').value;
-            const subcategoria = document.getElementById('subcategoria').value;
-            const precio = parseFloat(document.getElementById('precio').value);
-            const disponible = document.getElementById('disponible').checked;
-            const img = document.getElementById('imagen').value || 'https://via.placeholder.com/400x300?text=' + encodeURIComponent(nombre);
-            const descripcion = document.getElementById('descripcion').value;
-
-            if (!nombre || !categoria || !precio) {
-                mostrarAlerta('Por favor completa los campos obligatorios', 'error');
-                return;
-            }
-
-            try {
-                const { data, error } = await _supabase
-                    .from('productos')
-                    .insert([{
-                        nombre,
-                        categoria,
-                        subcategoria: subcategoria || 'General',
-                        precio,
-                        disponible,
-                        img,
-                        descripcion
-                    }]);
-
-                if (error) throw error;
-
-                mostrarAlerta('Producto agregado correctamente', 'success');
-                limpiarFormulario();
-                cargarProductos();
-                cambiarTab('productos');
-            } catch (err) {
-                mostrarAlerta('Error: ' + err.message, 'error');
+                tbody.appendChi// Duplicate guardarProducto function removed to avoid conflict.
+rr.message, 'error');
             }
         }
 
@@ -821,17 +885,8 @@
             }
         }
 
-        function limpiarFormulario() {
-            document.getElementById('nombre').value = '';
-            document.getElementById('categoria').value = '';
-            document.getElementById('subcategoria').value = '';
-            document.getElementById('precio').value = '';
-            document.getElementById('disponible').checked = true;
-            document.getElementById('imagen').value = '';
-            document.getElementById('descripcion').value = '';
-            document.getElementById('imagenPreview').style.display = 'none';
-            document.getElementById('formTitle').textContent = 'Agregar Nuevo Producto';
-        }
+        // Duplicate limpiarFormulario function removed.
+
 
         function cerrarModal() {
             document.getElementById('editModal').classList.remove('active');
@@ -847,16 +902,7 @@
             }, 3000);
         }
 
-        // Preview de imagen
-        document.getElementById('imagen')?.addEventListener('change', function () {
-            const preview = document.getElementById('imagenPreview');
-            if (this.value) {
-                preview.src = this.value;
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
-        });
+
 
         // Enter para login
         document.getElementById('passwordInput')?.addEventListener('keypress', function (e) {
