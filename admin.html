@@ -396,12 +396,24 @@
             box-shadow: 0 6px 12px rgba(11, 61, 76, 0.3);
         }
 
-        .img-preview {
-            max-width: 100px;
-            max-height: 100px;
-            margin-top: 0.5rem;
-            border-radius: 4px;
-        }
+    .drop-area {
+        border: 2px dashed rgba(0,0,0,0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.3s, border-color 0.3s;
+    }
+    .drop-area:hover {
+        background: rgba(0,0,0,0.05);
+        border-color: #0B3D4C;
+    }
+    .drop-area i {
+        color: #0B3D4C;
+        margin-bottom: 0.5rem;
+    }
+    .img-preview.hidden { display: none; }
+    .img-preview { max-width: 150px; margin-top: 0.5rem; border-radius: 4px; }
 
         .acciones {
             display: flex;
@@ -555,9 +567,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="imagen">URL de Imagen</label>
-                        <input type="text" id="imagen" placeholder="https://ejemplo.com/imagen.jpg" />
-                        <img id="imagenPreview" class="img-preview" style="display: none;" />
+                        <label>Imagen del Producto (arrastrar o click)</label>
+                        <div id="dropArea" class="drop-area">
+                            <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                            <p>Arrastra la imagen aquí o haz clic para seleccionar</p>
+                            <img id="imagePreview" class="img-preview hidden" alt="Vista previa" />
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" style="display:none;" />
                     </div>
 
                     <div class="form-group">
@@ -619,7 +635,7 @@
         // For static hosting, replace the placeholders below with the actual values.
         const SUPABASE_URL = 'https://nhkpctbmyhjqsfozxdmb.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oa3BjdGJteWhqcXNmb3p4ZG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDAzMzcsImV4cCI6MjA5NDYxNjMzN30.DzV-NsqO-KpqxdUldgj8OX-NPYWnHthPQ4bGi1ghGco';
-        const ADMIN_PASSWORD = 'mercy123'; // CAMBIAR en producción
+        const ADMIN_PASSWORD = 'mercy123'; // CAMBIAR en producci��n
 
         const { createClient } = supabase;
         const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -627,6 +643,8 @@
         let isAuthenticated = false;
         let productos = [];
         let productoEditando = null;
+        let uploadedImageUrl = '';
+        let editUploadedImageUrl = '';
 
         function verificarPassword() {
             const password = document.getElementById('passwordInput').value.trim();
@@ -644,7 +662,7 @@
         function logout() {
             isAuthenticated = false;
             }
-                mostrarAlerta('Contrase�a incorrecta', 'error');
+                mostrarAlerta('Contrase�a incorrecta', 'error');
             } else {
                 cargarProductos();
                 document.getElementById('adminScreen').style.display = 'block';
