@@ -573,10 +573,7 @@
 <body>
     <header id="mainHeader"
         style="position:fixed;top:0;left:0;width:100%;height:160px;z-index:1000;background:linear-gradient(135deg,#1a3d2b 0%,#2d6a4f 100%);display:flex;align-items:center;padding:0 2.5rem;gap:1.5rem;box-shadow:0 4px 24px rgba(0,0,0,0.18);">
-                <picture>
-          <source srcset="/logo_compressed.webp" type="image/webp">
-          <img src="/logo.png" alt="Logo Mercy Market" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid rgba(201,169,110,0.5);box-shadow:0 4px 16px rgba(0,0,0,0.25);">
-        </picture>
+                 <img src="https://via.placeholder.com/110" alt="Logo Mercy Market" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid rgba(201,169,110,0.5);box-shadow:0 4px 16px rgba(0,0,0,0.25);">
         <div>
             <h1
                 style="margin:0;font-family:'Cormorant Garamond',serif;font-size:2.1rem;font-weight:400;letter-spacing:2px;color:#fff;">
@@ -1075,23 +1072,35 @@
                     String(a.nombre || '').localeCompare(String(b.nombre || ''))
                 );
 
-                productosCat.forEach(p => {
-                    const tarjeta = document.createElement('div');
-                    tarjeta.className = 'tarjeta';
+                 productosCat.forEach(p => {
+                     const tarjeta = document.createElement('div');
+                     tarjeta.className = 'tarjeta';
 
-                    const imgSrc = p.img ? p.img : `https://via.placeholder.com/400x300?text=${encodeURIComponent(p.nombre)}`;
+                     let imgSrc = p.img ? p.img : `https://via.placeholder.com/400x300?text=${encodeURIComponent(p.nombre)}`;
+                     
+                     // Fix for GitHub image requests causing cookie warnings
+                     if (p.img) {
+                         // If it's a GitHub URL for our specific problem files, use local copy instead
+                         if (p.img.includes('githubusercontent.com')) {
+                             if (p.img.includes('cable_1hora.webp')) {
+                                 imgSrc = '/img_mer/cable_1hora.webp';
+                             } else if (p.img.includes('logo_compressed.webp')) {
+                                 imgSrc = '/logo_compressed.webp';
+                             }
+                         }
+                     }
 
-                    tarjeta.innerHTML = `
-                <img src="${imgSrc}" alt="${p.nombre}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Imagen+No+Disponible';">
-                <div class="info">
-                  <h3>${p.nombre}</h3>
-                  <span class="${p.disponible ? 'disponible' : 'agotado'}">${p.disponible ? 'Disponible' : 'Agotado'}</span>
-                  <div class="precio">${Number(p.precio).toFixed(2)} CUP</div>
-                  <button onclick="addCarrito(${p.id})" style="margin-top:.75rem;padding:.5rem 1rem;border:none;border-radius:25px;background:linear-gradient(135deg,#1a3d2b,#2d6a4f);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .3s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(26,61,43,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><i class='fas fa-cart-plus' style='margin-right:6px;'></i>Agregar</button>
-                </div>
-              `;
-                    cont.appendChild(tarjeta);
-                });
+                     tarjeta.innerHTML = `
+                 <img src="${imgSrc}" alt="${p.nombre}" onerror="this.onerror=null; this.src='https://via.placeholder.com/400x300?text=Imagen+No+Disponible';">
+                 <div class="info">
+                   <h3>${p.nombre}</h3>
+                   <span class="${p.disponible ? 'disponible' : 'agotado'}">${p.disponible ? 'Disponible' : 'Agotado'}</span>
+                   <div class="precio">${Number(p.precio).toFixed(2)} CUP</div>
+                   <button onclick="addCarrito(${p.id})" style="margin-top:.75rem;padding:.5rem 1rem;border:none;border-radius:25px;background:linear-gradient(135deg,#1a3d2b,#2d6a4f);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .3s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(26,61,43,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><i class='fas fa-cart-plus' style='margin-right:6px;'></i>Agregar</button>
+                 </div>
+               `;
+                     cont.appendChild(tarjeta);
+                 });
             });
         }
 
