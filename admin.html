@@ -750,6 +750,11 @@
                 return;
             }
 
+            if (!uploadedImageUrl) {
+                mostrarAlerta('Imagen no cargada o subida fallida', 'error');
+                return;
+            }
+
             try {
                 const { data, error } = await _supabase
                     .from('productos')
@@ -832,17 +837,8 @@
             }
         }
 
-        function limpiarFormulario() {
-            document.getElementById('nombre').value = '';
-            document.getElementById('categoria').value = '';
-            document.getElementById('subcategoria').value = '';
-            document.getElementById('precio').value = '';
-            document.getElementById('disponible').checked = true;
-            document.getElementById('imagen').value = '';
-            document.getElementById('descripcion').value = '';
-            document.getElementById('imagenPreview').style.display = 'none';
-            document.getElementById('formTitle').textContent = 'Agregar Nuevo Producto';
-        }
+        // Duplicate limpiarFormulario removed – keep the later implementation
+
 
         function cerrarModal() {
             document.getElementById('editModal').classList.remove('active');
