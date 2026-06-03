@@ -50,7 +50,7 @@ ADMIN_PASSWORD=tu_contraseña_segura
 ## ⚠️ Seguridad (IMPORTANTE)
 
 ### 1. Credenciales Expuestas
-- Las claves de Supabase están en `romero.html` y `admin.html`
+- Las claves de Supabase están en `index.html` y `admin.html`
 - **Debes regenerarlas inmediatamente**
 
 ### 2. Pasos de Seguridad
@@ -93,7 +93,7 @@ FOR INSERT, UPDATE, DELETE TO authenticated USING (true);
 
 ```
 mercy/
-├── romero.html          # Tienda pública
+├── index.html          # Tienda pública
 ├── admin.html           # Panel de administración
 ├── api/
 │   └── products.js      # Función serverless GET
@@ -108,7 +108,7 @@ mercy/
 ## 🔄 Flujo de Datos
 
 ```
-romero.html (Cliente)
+index.html (Cliente)
     ↓
     └→ Supabase (Base de datos)
     
