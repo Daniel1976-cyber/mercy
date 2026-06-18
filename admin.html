@@ -630,11 +630,22 @@
             </div>
 
             <div class="form-group">
-                <label for="editDisponible">
-                    <input type="checkbox" id="editDisponible" style="width: auto; margin-right: 0.5rem;" />
-                    Disponible
-                </label>
-            </div>
+    <label for="editDisponible">
+        <input type="checkbox" id="editDisponible" style="width: auto; margin-right: 0.5rem;" />
+        Disponible
+    </label>
+</div>
+<!-- Image upload for edit -->
+<div class="form-group">
+    <label>Imagen del Producto (cambiar)</label>
+    <div id="editDropArea" class="drop-area" style="cursor:pointer; border:2px dashed rgba(0,0,0,0.2); padding:1rem; text-align:center;">
+        <i class="fas fa-cloud-upload-alt fa-2x"></i>
+        <p>Arrastra la imagen aquí o haz clic para seleccionar</p>
+        <img id="editImagePreview" class="img-preview hidden" alt="Vista previa" />
+    </div>
+    <input type="file" id="editImageInput" accept="image/*" style="display:none;" />
+    <input type="hidden" id="editImagen" />
+</div>
 
             <button class="btn-submit" onclick="guardarEdicion()">Guardar Cambios</button>
             <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
@@ -797,16 +808,31 @@
         }
 
         function editarProducto(id) {
-            productoEditando = productos.find(p => p.id === id);
-            if (!productoEditando) return;
+    productoEditando = productos.find(p => p.id === id);
+    if (!productoEditando) return;
 
-            document.getElementById('editNombre').value = productoEditando.nombre;
-            document.getElementById('editCategoria').value = productoEditando.categoria;
-            document.getElementById('editPrecio').value = productoEditando.precio;
-            document.getElementById('editDisponible').checked = productoEditando.disponible;
+    document.getElementById('editNombre').value = productoEditando.nombre;
+    document.getElementById('editCategoria').value = productoEditando.categoria;
+    document.getElementById('editPrecio').value = productoEditando.precio;
+    document.getElementById('editDisponible').checked = productoEditando.disponible;
 
-            document.getElementById('editModal').classList.add('active');
-        }
+    // Set existing image preview if available
+    if (productoEditando.img) {
+        const preview = document.getElementById('editImagePreview');
+        preview.src = productoEditando.img;
+        preview.classList.remove('hidden');
+        document.getElementById('editImagen').value = productoEditando.img;
+    } else {
+        // Ensure hidden state when no image
+        const preview = document.getElementById('editImagePreview');
+        preview.classList.add('hidden');
+        document.getElementById('editImagen').value = '';
+    }
+    // Reset any previous uploaded image URL
+    editUploadedImageUrl = '';
+
+    document.getElementById('editModal').classList.add('active');
+}
 
         async function guardarEdicion() {
             if (!productoEditando) return;
@@ -819,7 +845,7 @@
             try {
                 const { error } = await _supabase
                     .from('productos')
-                    .update({ nombre, categoria, precio, disponible })
+                    .update({ nombre, categoria, precio, disponible, img: editUploadedImageUrl || productoEditando.img })
                     .eq('id', productoEditando.id);
 
                 if (error) throw error;
@@ -876,10 +902,35 @@
         const imageInput = document.getElementById('imageInput');
         const imagePreview = document.getElementById('imagePreview');
         let uploadedImageUrl = '';
+        let editUploadedImageUrl = '';
 
         dropArea?.addEventListener('click', () => imageInput.click());
 
         imageInput?.addEventListener('change', handleFileSelect);
+        // Edit image input change
+        const editDropArea = document.getElementById('editDropArea');
+        const editImageInput = document.getElementById('editImageInput');
+        const editImagePreview = document.getElementById('editImagePreview');
+
+        editDropArea?.addEventListener('click', () => editImageInput.click());
+        editImageInput?.addEventListener('change', handleEditFileSelect);
+
+        editDropArea?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            editDropArea.style.borderColor = '#0B3D4C';
+            editDropArea.style.background = 'rgba(0,0,0,0.05)';
+        });
+        editDropArea?.addEventListener('dragleave', () => {
+            editDropArea.style.borderColor = 'rgba(0,0,0,0.2)';
+            editDropArea.style.background = '';
+        });
+        editDropArea?.addEventListener('drop', (e) => {
+            e.preventDefault();
+            editDropArea.style.borderColor = 'rgba(0,0,0,0.2)';
+            editDropArea.style.background = '';
+            const file = e.dataTransfer.files[0];
+            if (file) handleEditFile(file);
+        });
 
         dropArea?.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -903,6 +954,28 @@
         function handleFileSelect(e) {
             const file = e.target.files[0];
             if (file) handleFile(file);
+        }
+
+        function handleEditFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) handleEditFile(file);
+        }
+
+        async function handleEditFile(file) {
+            if (!file.type.startsWith('image/')) {
+                mostrarAlerta('Selecciona solo archivos de imagen', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                editImagePreview.src = e.target.result;
+                editImagePreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            editUploadedImageUrl = await uploadToSupabase(file);
+            if (editUploadedImageUrl) {
+                document.getElementById('editImagen').value = editUploadedImageUrl;
+            }
         }
 
         async function handleFile(file) {
