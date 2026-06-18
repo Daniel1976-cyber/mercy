@@ -627,7 +627,7 @@
         <div id="modal" onclick="event.stopPropagation()">
             <h3>Tu pedido</h3>
             <div id="listaCarrito"></div>
-            <div class="total" id="totalCarrito">0.00 CUP</div>
+            <div class="total" id="totalCarrito">0.00 USD</div>
             <div class="botones">
                 <button class="btn-wsp" onclick="enviarWhatsApp()">Enviar por WhatsApp</button>
                 <button class="btn-cancel" onclick="cerrarCarrito()">Cerrar</button>
@@ -987,7 +987,7 @@
             lista.innerHTML = '';
             if (carrito.length === 0) {
                 lista.innerHTML = '<p style="color:#666">No hay productos en el carrito</p>';
-                totalEl.textContent = '0.00 CUP';
+                totalEl.textContent = '0.00 USD';
             } else {
                 let suma = 0;
                 carrito.forEach(l => {
@@ -996,7 +996,7 @@
                     div.innerHTML = `
             <div>
               <strong>${l.nombre}</strong><br>
-              <small>${l.cant} × ${Number(l.precio).toFixed(2)} CUP</small>
+              <small>${l.cant} × ${Number(l.precio).toFixed(2)} USD</small>
             </div>
             <div>
               <button class="inline" onclick="modCant(${l.id}, -1)">−</button>
@@ -1007,7 +1007,7 @@
                     lista.appendChild(div);
                     suma += l.cant * l.precio;
                 });
-                totalEl.textContent = suma.toFixed(2) + ' CUP';
+                totalEl.textContent = suma.toFixed(2) + ' USD';
             }
             document.getElementById('modalFondo').style.display = 'flex';
         }
@@ -1031,10 +1031,10 @@
             let texto = 'Hola, quisiera hacer este pedido:%0A%0A';
             let total = 0;
             carrito.forEach(l => {
-                texto += `• ${l.nombre} (${l.cant}×${Number(l.precio).toFixed(2)} CUP)%0A`;
+                texto += `• ${l.nombre} (${l.cant}×${Number(l.precio).toFixed(2)} USD)%0A`;
                 total += l.cant * l.precio;
             });
-            texto += `%0A*Total: ${total.toFixed(2)} CUP*%0A%0A¿Está disponible?`;
+            texto += `%0A*Total: ${total.toFixed(2)} USD*%0A%0A¿Está disponible?`;
             const url = `https://wa.me/${tlf}?text=${encodeURIComponent(decodeURIComponent(texto))}`;
             window.open(url, '_blank');
         }
@@ -1095,7 +1095,7 @@
                  <div class="info">
                    <h3>${p.nombre}</h3>
                    <span class="${p.disponible ? 'disponible' : 'agotado'}">${p.disponible ? 'Disponible' : 'Agotado'}</span>
-                   <div class="precio">${Number(p.precio).toFixed(2)} CUP</div>
+                   <div class="precio">${Number(p.precio).toFixed(2)} USD</div>
                    <button onclick="addCarrito(${p.id})" style="margin-top:.75rem;padding:.5rem 1rem;border:none;border-radius:25px;background:linear-gradient(135deg,#1a3d2b,#2d6a4f);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.5px;cursor:pointer;transition:all .3s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(26,61,43,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''"><i class='fas fa-cart-plus' style='margin-right:6px;'></i>Agregar</button>
                  </div>
                `;
