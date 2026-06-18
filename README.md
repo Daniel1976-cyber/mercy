@@ -147,7 +147,7 @@ CREATE TABLE productos (
 
 ### Login
 1. Ve a `mercymarket.vercel.app/admin.html`
-2. Ingresa: `mercy123`
+2. Ingresa: `contraseña segura`
 3. Click en "Ingresar"
 
 ### Dashboard
@@ -174,7 +174,7 @@ CREATE TABLE productos (
 - Abre la consola (F12) para ver errores
 
 ### "Contraseña incorrecta"
-- Verifica que escribas `mercy123` correctamente
+- Verifica que escribas `tu contraseña correctamente
 - Cambia la contraseña en `admin.html` si es necesario
 
 ### "CORS Error"
