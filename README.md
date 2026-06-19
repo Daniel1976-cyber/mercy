@@ -1,4 +1,4 @@
-# Mercy Market - Panel Administrador
+# Quiroga Express - Panel Administrador
 
 ## 🚀 Cómo Empezar
 
@@ -194,4 +194,4 @@ CREATE TABLE productos (
 
 ## 📄 Licencia
 
-Proyecto privado de Mercy Market © 2025
+Proyecto privado de Quiroga Express © 2025
